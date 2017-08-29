@@ -540,7 +540,7 @@ void print_error_data(int np, double avgerr, double stdd, double *x, double *err
                         fprintf(fp, "(UNDEF, UNDEF)\n");
         }
 
-        for(i = 1; i < np; i++)
+        for(i = 1; i <= np; i++)
         {
                 fprintf(fp, "%f %0.6e \n", x[i], err[i]);
         }
