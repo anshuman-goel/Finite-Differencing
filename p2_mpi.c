@@ -23,7 +23,7 @@
 #include <string.h>
 #include "mpi.h"
 
-#define BLOCKING 1 // 1: Blocking communication, 0: Non-Blocking communication
+#define BLOCKING 0 // 1: Blocking communication, 0: Non-Blocking communication
 
 #define MANUALREDUCE 1 // 1: Manual Reduction; 0 : MPI_REDUCE
 
@@ -98,6 +98,7 @@ int main (int argc, char *argv[])
         imax = NGRID;
 
         double error_end, error_start, start_finite_der, end_finite_der, start_dips, end_dips;
+        double start_send_call_measure, end_send_call_measure;
 
         int numproc, rank;
         MPI_Init(&argc, &argv);
@@ -164,6 +165,9 @@ int main (int argc, char *argv[])
                 local_min_max[i]=INT_MAX;
         }
 
+        //Start measuring time for the send call
+        start_send_call_measure = MPI_Wtime();
+
         // Storing the boundary f(x) values
         double left_end = 99, right_end = 99;
         if(rank == 0) {
@@ -196,8 +200,12 @@ int main (int argc, char *argv[])
                 right_end = receive(rank+1);
                 left_end = receive(rank-1);
         }
+        //End measurement for send-call
+        end_send_call_measure = MPI_Wtime();
 
+        //Start measurement for finite-derivative calculation
         start_finite_der = MPI_Wtime();
+
         // Calculate approximate derivative and local_min_max
         int count = 0;
         // At imin
@@ -249,7 +257,10 @@ int main (int argc, char *argv[])
         }
         if(rank == 0)
         {
+                //End measurement for finite-derivative calculation
                 end_finite_der = MPI_Wtime();
+
+                printf("Total send-call Time(s) %0.6e\n", end_send_call_measure - start_send_call_measure);
                 printf("Total Finite Derivative Time(s) %0.6e\n", end_finite_der - start_finite_der);
         }
 
