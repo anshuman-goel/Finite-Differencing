@@ -105,6 +105,12 @@ int main (int argc, char *argv[])
         MPI_Comm_size(MPI_COMM_WORLD, &numproc);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+        if(numproc == 1){
+            printf("Please use more than one processors for the parallel program to run.\n");
+            MPI_Finalize();
+            return 0;
+        }
+
         int chunk_max, chunk_min; //local max and min for each chunk
         int chunk_size = (NGRID+2)/numproc;
         double *x; //array for the local grid points
@@ -112,7 +118,7 @@ int main (int argc, char *argv[])
                 //Calculate chunk endpoints
                 chunk_min = rank*chunk_size;
                 //to handle if NGRID isn't evenly divisible by numproc
-                if(NGRID % numproc != 0) {
+                if( (NGRID+2) % numproc != 0) {
                         chunk_size += (NGRID+2) % numproc; //chunksize for last process is different
                 }
                 chunk_max = NGRID+1;
@@ -210,6 +216,9 @@ int main (int argc, char *argv[])
         int count = 0;
         // At imin
         dy[imin] = (y[imin + 1] - left_end)/(2.0 * dx);
+        
+
+
         if (fabs(dy[imin])<EPSILON)
         {
                 if(count >= DEGREE-1)
@@ -252,7 +261,7 @@ int main (int argc, char *argv[])
                 }
 
                 local_min_max[count++] = x[imax];
-                printf("-----------Local min max at proc %d: %f, dy/dx = %f\n",rank,x[imax], dy[imax] );
+                // printf("-----------Local min max at proc %d: %f, dy/dx = %f\n",rank,x[imax], dy[imax] );
 
         }
         if(rank == 0)
@@ -269,7 +278,8 @@ int main (int argc, char *argv[])
         err = (double*)malloc((imax - imin + 1) * sizeof(double));
         for(i = imin; i <= imax; i++)
         {
-                err[i-imin] = fabs( dy[i] - dfn(x[i]) );
+
+                err[i-imin] = fabs( dy[i] - dfn(x[i]) );                
         }
 
 
@@ -294,22 +304,28 @@ int main (int argc, char *argv[])
         if(rank==0)
         {
                 // Concatenating error array from all the processors
-                int proc_chunk_size, ptr = imax - imin + 2;
+                int proc_chunk_size; //ptr = imax - imin + 2;
+                int ptr = 1;
                 for(int i=0; i<imax; i++)
                 {
                         error[i+1] = err[i];
+                        ptr++;
                 }
                 for(int i=1; i<numproc; i++) {
                         // Receiving err array size from each processor
                         MPI_Recv(&proc_chunk_size, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         double temp_error[proc_chunk_size];
                         // Receiving err array from each processor
+
                         MPI_Recv(temp_error, proc_chunk_size, MPI_DOUBLE, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         for(int j=0; j<proc_chunk_size; j++)
                         {
-                                error[ptr++] = temp_error[j];
+                                error[ptr] = temp_error[j];
+                                ptr++;
                         }
+
                 }
+
                 error_end = MPI_Wtime();
                 printf("Total Error Time(s) %0.6e\n", error_end - error_start);
 
@@ -387,7 +403,7 @@ int main (int argc, char *argv[])
                         x_all[i] = XI + (XF - XI) * (double)(i - 1)/(double)(NGRID - 1);
                 }
                 // Writing to err.dat
-                print_error_data(NGRID, avg_err, std_dev, &x_all[1], error, global_min_max);
+                print_error_data(NGRID, avg_err, std_dev, &x_all[0], error, global_min_max);
         }
 
         free(y);
@@ -524,7 +540,7 @@ void print_error_data(int np, double avgerr, double stdd, double *x, double *err
                         fprintf(fp, "(UNDEF, UNDEF)\n");
         }
 
-        for(i = 0; i < np; i++)
+        for(i = 1; i < np; i++)
         {
                 fprintf(fp, "%f %0.6e \n", x[i], err[i]);
         }
