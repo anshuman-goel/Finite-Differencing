@@ -22,6 +22,10 @@ We tested our results with grid points size: 100000, epsilon value: 0.00005 and 
 
 Serial - Finite difference: 6.7e-03, error: 9.79e-03, local minima maxima: 4.02e-03 
 
+What the values mean:
+	1: Blocking communication, 0: Non-Blocking communication
+	1: Manual Reduction; 0 : MPI_REDUCE
+
 BLOCKING 1
 MANUALREDUCE 1
 
