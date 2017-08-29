@@ -1,15 +1,24 @@
+#############################################################################
+#
+# Group Info:
+# agoel5 Anshuman Goel
+# kgondha Kaustubh Gondhalekar
+# ndas Neha Das
+#
+##############################################################################
+
 Problem 3 (Group Problem)
 
-Problem Objective: Given some function, numerically compute derivatives at all grid points, find all local minima and maxima, and the error and standard deviation of the error of these numerical computations. This has to be implemented in a parallel scheme using MPI which writes the results to an output file. 
+Problem Objective: Given some function, numerically compute derivatives at all grid points, find all local minima and maxima, and the error and standard deviation of the error of these numerical computations. This has to be implemented in a parallel scheme using MPI which writes the results to an output file.
 
 Solution Outline:
 1. First, we divide the total grid points among the number of processors such that the last processor will have extra grid points corresponding to the remainder. We also calculate the chunk end points.
-2. The above chunk size is used to construct the x array for the local grid points at each processor. Similarly, the y array is calculated at each processor which holds the fn(x) values. 
+2. The above chunk size is used to construct the x array for the local grid points at each processor. Similarly, the y array is calculated at each processor which holds the fn(x) values.
 3. Now, the boundary fn(x) values for each chunk are sent and received using MPI_Send and MPI_Recv for blocking communication, and MPI_Isend and MPI_Irecv for non-blocking communication. Boundary values for left-end of first processor and right-end of last processor are not sent or received.
 4. Once that is complete, we calculate the approximate derivative, the local minima and maxima and the error at each processor.
 5. The error array from each processor is sent to the root process which receives and combines all the error arrays including its own to form the global error array. This is used to calculate the average error and standard deviation at the root.
-6. For calculating the local minima and maxima with Manual Reduction, the local_min_max array at each processor is sent to the root process which receives and checks all the local_min_max arrays including its own to form the global_min_max array. 
-7. For calculating the local minima and maxima with MPI_Reduce, we have a written a custom reduction operation called myOp which will append all the valid values in local_min_max arrays of all processors into a global_min_max array at root. 
+6. For calculating the local minima and maxima with Manual Reduction, the local_min_max array at each processor is sent to the root process which receives and checks all the local_min_max arrays including its own to form the global_min_max array.
+7. For calculating the local minima and maxima with MPI_Reduce, we have a written a custom reduction operation called myOp which will append all the valid values in local_min_max arrays of all processors into a global_min_max array at root.
 
 Commands to install/execute: Login to the ARC cluster and then login interactively to a compute node with the following commands -
 srun -N1 -n4 -p opteron --pty /bin/bash
@@ -20,7 +29,7 @@ Performance Comparison:
 
 We tested our results with grid points size: 100000, epsilon value: 0.00005 and degree: 3 for finite difference, error, and local minima maxima calculation across the four communication methods of blocking, non-blocking, manual reduction, and MPI_Reduce. (All results are in seconds)
 
-Serial - Finite difference: 6.7e-03, error: 9.79e-03, local minima maxima: 4.02e-03 
+Serial - Finite difference: 6.7e-03, error: 9.79e-03, local minima maxima: 4.02e-03
 
 What the values mean:
 	1: Blocking communication, 0: Non-Blocking communication
@@ -103,8 +112,8 @@ Total Error Time(s) 3.106785e-02
 Total local_min_max Derivative Time(s) 8.630753e-05
 
 
-As the results show, the calculation time of the parallel programs are lesser as compared to the serial program. 
-With the increase in the number of processors, the calculation time for finite derivative decreases while that of error and local minima maxima calculation increases and hence overall calculation time increases as communications between processors also increases. 
+As the results show, the calculation time of the parallel programs are lesser as compared to the serial program.
+With the increase in the number of processors, the calculation time for finite derivative decreases while that of error and local minima maxima calculation increases and hence overall calculation time increases as communications between processors also increases.
 An interesting observation is that while the blocking/non-blocking does not affect the manual reduction/MPI_Reduce methods, the manual reduction method for local minima maxima calculation takes lesser time as compared to the MPI_Reduce method.
 
 
@@ -119,5 +128,3 @@ The error is inversely proportional to the number of grid points. As the number 
 Change in epsilon value does not affect the error. Though it does affect the local minima and maxima detected.
 
 Additionally, epsilon is inversely proportional to the number of grid points. This is also the expected behaviour since as the interval between two grid points decreases, the epsilon should also decrease. This is because, if  the epsilon is too large with respect to the number of grid points, we may detect multiple local minima/maxima that aren't correct (false positive).
-
-

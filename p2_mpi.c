@@ -95,10 +95,10 @@ int main (int argc, char *argv[]){
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
         //Handles case with just one processor
-        if(numproc == 1){
-            printf("Please use more than one processors for the parallel program to run.\n");
-            MPI_Finalize();
-            return 0;
+        if(numproc == 1) {
+                printf("Please use more than one processors for the parallel program to run.\n");
+                MPI_Finalize();
+                return 0;
         }
 
         int chunk_max, chunk_min; //local max and min for each chunk
@@ -204,8 +204,8 @@ int main (int argc, char *argv[]){
         int count = 0;
         // At imin
         dy[imin] = (y[imin + 1] - left_end)/(2.0 * dx);
-        if (fabs(dy[imin])<EPSILON){
-                if(count >= DEGREE-1){
+        if (fabs(dy[imin])<EPSILON) {
+                if(count >= DEGREE-1) {
                         printf("Warning: You have detected more than the maximum possible local minima/maxima.\n");
                         printf("Ensure that DEGREE is accurate or reduce your EPSILON.\n");
                         printf("Reseting count to zero.\n");
@@ -214,11 +214,11 @@ int main (int argc, char *argv[]){
                 local_min_max[count++] = x[imin];
         }
         // Between imin and imax
-        for(int i = imin+1; i<=imax-1; i++){
+        for(int i = imin+1; i<=imax-1; i++) {
                 dy[i] = (y[i + 1] - y[i - 1])/(2.0 * dx);
-                if (fabs(dy[i])<EPSILON){
+                if (fabs(dy[i])<EPSILON) {
 
-                        if(count >= DEGREE-1){
+                        if(count >= DEGREE-1) {
                                 printf("Warning: You have detected more than the maximum possible local minima/maxima.\n");
                                 printf("Ensure that DEGREE is accurate or reduce your EPSILON.\n");
                                 printf("Reseting count to zero.\n");
@@ -229,9 +229,9 @@ int main (int argc, char *argv[]){
         }
         // At imax
         dy[imax] = (right_end - y[imax - 1])/ (2.0 * dx);
-        if (fabs(dy[imax])<EPSILON ){
+        if (fabs(dy[imax])<EPSILON ) {
 
-                if(count >= DEGREE-1){
+                if(count >= DEGREE-1) {
                         printf("Warning: You have detected more than the maximum possible local minima/maxima in process %d.\n", rank);
                         printf("Ensure that DEGREE is accurate or reduce your EPSILON.\n");
                         printf("Reseting count to zero.\n");
@@ -242,8 +242,8 @@ int main (int argc, char *argv[]){
         }
 
         //End measurement for finite-derivative calculation at root
-        if(rank == 0){
-                
+        if(rank == 0) {
+
                 end_finite_der = MPI_Wtime();
                 printf("Total send-call Time(s) %0.6e\n", end_send_call_measure - start_send_call_measure);
                 printf("Total Finite Derivative Time(s) %0.6e\n", end_finite_der - start_finite_der);
@@ -253,12 +253,12 @@ int main (int argc, char *argv[]){
         error_start = MPI_Wtime();
         // Calculate error for current chunk
         err = (double*)malloc((imax - imin + 1) * sizeof(double));
-        for(i = imin; i <= imax; i++){
-                err[i-imin] = fabs( dy[i] - dfn(x[i]) );                
+        for(i = imin; i <= imax; i++) {
+                err[i-imin] = fabs( dy[i] - dfn(x[i]) );
         }
 
         //All non-root processors send their error-arrays to root
-        if (rank!=0){
+        if (rank!=0) {
 
                 // Sending size and error to root
                 int err_size = (imax - imin + 1);
@@ -266,7 +266,7 @@ int main (int argc, char *argv[]){
                 MPI_Send(err, (imax - imin + 1), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
 
                 // Sending local_min_max to root processor for Manual Reduction
-                if (MANUALREDUCE == 1){                        
+                if (MANUALREDUCE == 1) {
                         MPI_Send(local_min_max, DEGREE - 1, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
                 }
         }
@@ -275,12 +275,12 @@ int main (int argc, char *argv[]){
         double global_min_max[DEGREE - 1];
         memset(global_min_max, INT_MAX, (DEGREE - 1)*sizeof(double));
 
-        if(rank==0){
+        if(rank==0) {
 
                 //Add own chunk error array to global-error-array
                 int proc_chunk_size;
                 int ptr = 1;
-                for(int i = 0; i < imax; i++){
+                for(int i = 0; i < imax; i++) {
                         error[i+1] = err[i];
                         ptr++;
                 }
@@ -292,7 +292,7 @@ int main (int argc, char *argv[]){
                         double temp_error[proc_chunk_size];
                         // Receiving err array from each processor
                         MPI_Recv(temp_error, proc_chunk_size, MPI_DOUBLE, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                        for(int j = 0; j < proc_chunk_size; j++){
+                        for(int j = 0; j < proc_chunk_size; j++) {
                                 error[ptr] = temp_error[j];
                                 ptr++;
                         }
@@ -302,13 +302,13 @@ int main (int argc, char *argv[]){
                 printf("Total Error Time(s) %0.6e\n", error_end - error_start);
 
                 // Calculating average error at root
-                for(int i = 1; i < NGRID+1; i++){
+                for(int i = 1; i < NGRID+1; i++) {
                         avg_err += error[i];
                 }
                 avg_err /= NGRID;
 
                 // Calculating Standard deviation of error at root
-                for(int i = 1; i < NGRID+1; i++){
+                for(int i = 1; i < NGRID+1; i++) {
                         std_dev += pow(avg_err - error[i],2);
                 }
                 std_dev = sqrt(std_dev/NGRID);
@@ -362,19 +362,19 @@ int main (int argc, char *argv[]){
                 start_dips = MPI_Wtime();
                 //Call MPI_Reduce with custom reduction operation
                 do_vector_reduction(&local_min_max, &global_min_max);
-                if(rank == 0){     
-                    //End measurement for local minima and maxima calculation    
-                    end_dips = MPI_Wtime();
-                    printf("Total local_min_max Derivative Time(s) %0.6e\n", end_dips - start_dips);
+                if(rank == 0) {
+                        //End measurement for local minima and maxima calculation
+                        end_dips = MPI_Wtime();
+                        printf("Total local_min_max Derivative Time(s) %0.6e\n", end_dips - start_dips);
                 }
         }
 
         //Print results to err.dat file
-        if(rank==0){
+        if(rank==0) {
 
                 double x_all[NGRID + 2];
                 // Can be changed with MPI_Gather but haven't asked to do in Homework Question
-                for (i = 1; i <= NGRID; i++){
+                for (i = 1; i <= NGRID; i++) {
                         x_all[i] = XI + (XF - XI) * (double)(i - 1)/(double)(NGRID - 1);
                 }
                 // Writing to err.dat
@@ -487,7 +487,7 @@ void print_function_data(int np, double *x, double *y, double *dydx){
 
         FILE *fp = fopen("fn.dat", "w");
 
-        for(i = 0; i < np; i++){
+        for(i = 0; i < np; i++) {
                 fprintf(fp, "%f %f %f\n", x[i], y[i], dydx[i]);
         }
 
@@ -501,14 +501,14 @@ void print_error_data(int np, double avgerr, double stdd, double *x, double *err
 
         fprintf(fp, "%0.6e\n%0.14e\n", avgerr, stdd);
 
-        for(i = 0; i<DEGREE-1; i++){
+        for(i = 0; i<DEGREE-1; i++) {
                 if (local_min_max[i] != INT_MAX)
                         fprintf(fp, "(%f, %f)\n", local_min_max[i], fn(local_min_max[i]));
                 else
                         fprintf(fp, "(UNDEF, UNDEF)\n");
         }
 
-        for(i = 1; i <= np; i++){
+        for(i = 1; i <= np; i++) {
                 fprintf(fp, "%f %0.6e \n", x[i], err[i]);
         }
         fclose(fp);
