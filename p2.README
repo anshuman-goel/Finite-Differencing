@@ -111,28 +111,13 @@ An interesting observation is that while the blocking/non-blocking does not affe
 
 Comment on how the errors change for (i) the number of grid points and (ii) the value of epsilon used.
 
-Number of grid points: 1000
-Epsilon: 0.005
 
-This is the given configuration. The code is correctly able to detect local minima and maxima.
+(i)
+The error is inversely proportional to the number of grid points. As the number of grid points increase, the error decreases since 'dx' approaches closer to zero.
 
+(ii)
+Change in epsilon value does not affect the error. Though it does affect the local minima and maxima detected.
 
-Number of grid points: 10000
-
-	Epsilon : 0.005
-	Too many minima/maxima detected.
-
-	Epsilon: 0.0005
-	Local minima/maxima successfully detected.
-
-
-Number of grid points : 100000
-	Epsilon : 0.005 
-	Too many minima/maxima detected.
-
-	Epsilon: 0.00005
-	Local minima/maxima successfully detected.
-
-Observing these changes to the configuration, we have come to the conclusion that epsilon is inversely proportional to the number of grid points. This is also the expected behaviour since as the interval between two grid points decreases, the epsilon should also decrease. This is because, if  the epsilon is too large with respect to the number of grid points, we may detect multiple local minima/maxima that aren't correct (false positive).
+Additionally, epsilon is inversely proportional to the number of grid points. This is also the expected behaviour since as the interval between two grid points decreases, the epsilon should also decrease. This is because, if  the epsilon is too large with respect to the number of grid points, we may detect multiple local minima/maxima that aren't correct (false positive).
 
 
